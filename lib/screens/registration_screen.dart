@@ -1,10 +1,8 @@
-import 'package:flutter/material.dart'; // Удалён неиспользуемый импорт
-import '../widgets/logo_widget.dart'; // Логотип
-import '../widgets/subtitle_widget.dart'; // Подзаголовок
-import '../widgets/auth_container.dart'; // Контейнер с формами
+import 'package:flutter/material.dart';
+import '../widgets/logo_widget.dart';
+import '../widgets/subtitle_widget.dart';
+import '../widgets/auth_container.dart';
 
-// Это основной класс виджета для экрана регистрации.
-// Он extends StatefulWidget, потому что экран будет иметь состояние (например, для TabController).
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
 
@@ -12,20 +10,18 @@ class RegistrationScreen extends StatefulWidget {
   State<RegistrationScreen> createState() => _RegistrationScreenState();
 }
 
-// Это приватный класс состояния (state) для виджета.
-// Здесь хранится логика, переменные состояния и метод build() для отрисовки UI.
 class _RegistrationScreenState extends State<RegistrationScreen> with SingleTickerProviderStateMixin {
-  late TabController _tabController; // Контроллер для табов (остаётся здесь, т.к. общее для экрана)
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this); // Инициализация
+    _tabController = TabController(length: 2, vsync: this);
   }
 
   @override
   void dispose() {
-    _tabController.dispose(); // Очистка
+    _tabController.dispose();
     super.dispose();
   }
 
@@ -34,7 +30,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> with SingleTick
     return Scaffold(
       body: Stack(
         children: [
-          // Фоновое изображение
           Container(
             width: double.infinity,
             height: double.infinity,
@@ -45,26 +40,25 @@ class _RegistrationScreenState extends State<RegistrationScreen> with SingleTick
               ),
             ),
           ),
-          // Контент поверх фона с скроллом
           SingleChildScrollView(
             child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 50), // Отступ сверху
-                  const LogoWidget(), // Компонент логотипа
+                  const SizedBox(height: 50),
+                  const LogoWidget(),
                   const SizedBox(height: 10),
-                  const SubtitleWidget(), // Компонент подзаголовка
+                  const SubtitleWidget(),
                   const SizedBox(height: 30),
-                  AuthContainer(tabController: _tabController), // Компонент контейнера с формами (передаём TabController как prop)
-                  const SizedBox(height: 10),
+                  AuthContainer(tabController: _tabController),
+                  const SizedBox(height: 50),
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.pushNamed(context, '/test'); // Navigate to TestScreen
+                      Navigator.pushNamed(context, '/test');
                     },
                     child: const Text('Go to Test Screen'),
                   ),
-                  const SizedBox(height: 50), // Отступ снизу
+                  const SizedBox(height: 50),
                 ],
               ),
             ),

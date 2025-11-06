@@ -146,7 +146,6 @@ class _RegistrationFormState extends State<RegistrationForm> {
               child: ElevatedButton(
                 onPressed: () {
                   if (_formKey.currentState!.validate()) {
-                    // Логика регистрации (добавь API)
                     print('Регистрация: ${_usernameController.text}, ${_emailController.text}, ${_passwordController.text}');
                   }
                 },

@@ -1,25 +1,23 @@
 import 'package:flutter/material.dart';
-import 'routes.dart'; // Added import for AppRoutes
+import 'routes.dart';
 
 void main() {
-  runApp(const MyApp()); // Запускаем корневой виджет приложения.
+  runApp(const MyApp());
 }
 
-// Это корневой виджет приложения. Он Stateless, так как не меняет состояние.
-// Здесь оборачиваем всё в MaterialApp для тем, навигации и т.д.
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Мессенджер', // Название приложения (показывается в таск-менеджере).
+      title: 'Мессенджер',
       theme: ThemeData(
-        primarySwatch: Colors.blue, // Базовая тема (можно кастомизировать).
+        primarySwatch: Colors.blue,
       ),
-      initialRoute: AppRoutes.registration, // Set initial route
-      onGenerateRoute: AppRoutes.generateRoute, // Use AppRoutes for routing
-      debugShowCheckedModeBanner: false, // Убираем debug-баннер (опционально).
+      initialRoute: AppRoutes.registration,
+      onGenerateRoute: AppRoutes.generateRoute,
+      debugShowCheckedModeBanner: false,
     );
   }
 }
