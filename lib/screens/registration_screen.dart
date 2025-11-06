@@ -57,6 +57,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> with SingleTick
                   const SubtitleWidget(), // Компонент подзаголовка
                   const SizedBox(height: 30),
                   AuthContainer(tabController: _tabController), // Компонент контейнера с формами (передаём TabController как prop)
+                  const SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/test'); // Navigate to TestScreen
+                    },
+                    child: const Text('Go to Test Screen'),
+                  ),
                   const SizedBox(height: 50), // Отступ снизу
                 ],
               ),

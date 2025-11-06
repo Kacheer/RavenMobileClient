@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/registration_screen.dart'; // Импорт экрана
+import 'routes.dart'; // Added import for AppRoutes
 
 void main() {
   runApp(const MyApp()); // Запускаем корневой виджет приложения.
@@ -17,7 +17,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue, // Базовая тема (можно кастомизировать).
       ),
-      home: const RegistrationScreen(), // Здесь указываем стартовый экран.
+      initialRoute: AppRoutes.registration, // Set initial route
+      onGenerateRoute: AppRoutes.generateRoute, // Use AppRoutes for routing
       debugShowCheckedModeBanner: false, // Убираем debug-баннер (опционально).
     );
   }
