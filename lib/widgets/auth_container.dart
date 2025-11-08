@@ -1,12 +1,29 @@
 import 'package:flutter/material.dart';
 import 'dart:ui'; // Для blur
-import 'login_form.dart'; // Импорт формы входа
-import 'registration_form.dart'; // Импорт формы регистрации
+import './login_form.dart'; // Импорт формы входа
+import './registration_form.dart'; // Импорт формы регистрации
 
 class AuthContainer extends StatelessWidget {
   final TabController tabController; // Prop: контроллер табов от родителя
+  final TextEditingController usernameController;
+  final TextEditingController emailController;
+  final TextEditingController passwordController;
+  final TextEditingController confirmPasswordController;
+  final VoidCallback onRegister;
+  final VoidCallback onLogin;
+  final bool isLoading;
 
-  const AuthContainer({super.key, required this.tabController});
+  const AuthContainer({
+    super.key,
+    required this.tabController,
+    required this.usernameController,
+    required this.emailController,
+    required this.passwordController,
+    required this.confirmPasswordController,
+    required this.onRegister,
+    required this.onLogin,
+    required this.isLoading,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -40,9 +57,21 @@ class AuthContainer extends StatelessWidget {
                   height: MediaQuery.of(context).size.height * 0.6,
                   child: TabBarView(
                     controller: tabController,
-                    children: const [
-                      LoginForm(), // Компонент формы входа
-                      RegistrationForm(), // Компонент формы регистрации
+                    children: [
+                      LoginForm(
+                        onLogin: onLogin,
+                        isLoading: isLoading,
+                        emailController: emailController,
+                        passwordController: passwordController,
+                      ),
+                      RegistrationForm(
+                        onRegister: onRegister,
+                        isLoading: isLoading,
+                        usernameController: usernameController,
+                        emailController: emailController,
+                        passwordController: passwordController,
+                        confirmPasswordController: confirmPasswordController,
+                      ),
                     ],
                   ),
                 ),
