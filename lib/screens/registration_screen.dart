@@ -16,16 +16,20 @@ class RegistrationScreen extends StatefulWidget {
 class _RegistrationScreenState extends State<RegistrationScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final AuthService _authService = AuthService();
+  final SecureStorageService _storageService = SecureStorageService();
 
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
 
+  bool _isLoading = false;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    print('🔄 RegistrationScreen инициализирован');
   }
 
   @override
@@ -39,42 +43,122 @@ class _RegistrationScreenState extends State<RegistrationScreen> with SingleTick
   }
 
   Future<void> _register() async {
-    final data = {
-      'username': _usernameController.text,
-      'email': _emailController.text,
-      'password': _passwordController.text,
-    };
+    if (_isLoading) return;
+    
+    setState(() {
+      _isLoading = true;
+    });
 
-    final response = await _authService.register(data);
+    print('🎯 Начало процесса регистрации');
+    
+    try {
+      final data = {
+        'username': _usernameController.text,
+        'email': _emailController.text,
+        'password': _passwordController.text,
+      };
 
-    if (response.statusCode == 200) {
-      final token = response.body; // Assuming the token is in the response body
-      await SecureStorageService().writeData('auth_token', token);
-      Navigator.pushNamed(context, AppRoutes.test);
-    } else {
-      print('Registration failed: ${response.body}');
+      print('📝 Данные для регистрации: $data');
+
+      final response = await _authService.register(data);
+
+      print('📊 Ответ получен: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final token = response.body;
+        print('🔑 Токен получен: ${token.length > 20 ? '${token.substring(0, 20)}...' : token}');
+        
+        await _storageService.writeData('auth_token', token);
+        print('💾 Токен сохранен в Secure Storage');
+        
+        Navigator.pushNamed(context, AppRoutes.test);
+      } else {
+        print('❌ Регистрация не удалась: ${response.statusCode}');
+        print('📄 Тело ошибки: ${response.body}');
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка регистрации: ${response.body}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      print('💥 Исключение при регистрации: $e');
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Ошибка: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
   Future<void> _login() async {
-    final data = {
-      'email': _emailController.text,
-      'password': _passwordController.text,
-    };
+    if (_isLoading) return;
+    
+    setState(() {
+      _isLoading = true;
+    });
 
-    final response = await _authService.login(data);
+    print('🎯 Начало процесса входа');
+    
+    try {
+      final data = {
+        'email': _emailController.text,
+        'password': _passwordController.text,
+      };
 
-    if (response.statusCode == 200) {
-      final token = response.body; // Assuming the token is in the response body
-      await SecureStorageService().writeData('auth_token', token);
-      Navigator.pushNamed(context, AppRoutes.test);
-    } else {
-      print('Login failed: ${response.body}');
+      print('📝 Данные для входа: $data');
+
+      final response = await _authService.login(data);
+
+      print('📊 Ответ получен: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final token = response.body;
+        print('🔑 Токен получен: ${token.length > 20 ? '${token.substring(0, 20)}...' : token}');
+        
+        await _storageService.writeData('auth_token', token);
+        print('💾 Токен сохранен в Secure Storage');
+        
+        Navigator.pushNamed(context, AppRoutes.test);
+      } else {
+        print('❌ Вход не удался: ${response.statusCode}');
+        print('📄 Тело ошибки: ${response.body}');
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка входа: ${response.body}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      print('💥 Исключение при входе: $e');
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Ошибка: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    print('🏗️ Построение RegistrationScreen');
+    
     return Scaffold(
       body: Stack(
         children: [
@@ -98,8 +182,19 @@ class _RegistrationScreenState extends State<RegistrationScreen> with SingleTick
                   const SizedBox(height: 10),
                   const SubtitleWidget(),
                   const SizedBox(height: 30),
-                  AuthContainer(tabController: _tabController),
+                  AuthContainer(
+                    tabController: _tabController,
+                    usernameController: _usernameController,
+                    emailController: _emailController,
+                    passwordController: _passwordController,
+                    confirmPasswordController: _confirmPasswordController,
+                    onRegister: _register,
+                    onLogin: _login,
+                    isLoading: _isLoading,
+                  ),
                   const SizedBox(height: 30),
+                  if (_isLoading)
+                    const CircularProgressIndicator(),
                   const SizedBox(height: 50),
                 ],
               ),

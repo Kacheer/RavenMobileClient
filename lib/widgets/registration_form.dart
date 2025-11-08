@@ -1,27 +1,29 @@
 import 'package:flutter/material.dart';
 
 class RegistrationForm extends StatefulWidget {
-  const RegistrationForm({super.key});
+  final VoidCallback onRegister;
+  final bool isLoading;
+  final TextEditingController usernameController;
+  final TextEditingController emailController;
+  final TextEditingController passwordController;
+  final TextEditingController confirmPasswordController;
+
+  const RegistrationForm({
+    super.key,
+    required this.onRegister,
+    required this.isLoading,
+    required this.usernameController,
+    required this.emailController,
+    required this.passwordController,
+    required this.confirmPasswordController,
+  });
 
   @override
   State<RegistrationForm> createState() => _RegistrationFormState();
 }
 
 class _RegistrationFormState extends State<RegistrationForm> {
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-
-  @override
-  void dispose() {
-    _usernameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +40,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
             ),
             const SizedBox(height: 10),
             TextFormField(
-              controller: _usernameController,
+              controller: widget.usernameController,
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
                 hintText: 'Ваше имя',
@@ -64,7 +66,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
             ),
             const SizedBox(height: 10),
             TextFormField(
-              controller: _emailController,
+              controller: widget.emailController,
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
                 hintText: 'Введите вашу эл. почту',
@@ -90,7 +92,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
             ),
             const SizedBox(height: 10),
             TextFormField(
-              controller: _passwordController,
+              controller: widget.passwordController,
               obscureText: true,
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
@@ -107,6 +109,9 @@ class _RegistrationFormState extends State<RegistrationForm> {
                 if (value == null || value.isEmpty) {
                   return 'Пожалуйста, введите пароль';
                 }
+                if (value.length < 6) {
+                  return 'Пароль должен быть не менее 6 символов';
+                }
                 return null;
               },
             ),
@@ -117,7 +122,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
             ),
             const SizedBox(height: 10),
             TextFormField(
-              controller: _confirmPasswordController,
+              controller: widget.confirmPasswordController,
               obscureText: true,
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
@@ -134,7 +139,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
                 if (value == null || value.isEmpty) {
                   return 'Пожалуйста, подтвердите пароль';
                 }
-                if (value != _passwordController.text) {
+                if (value != widget.passwordController.text) {
                   return 'Пароли не совпадают';
                 }
                 return null;
@@ -144,11 +149,14 @@ class _RegistrationFormState extends State<RegistrationForm> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    print('Регистрация: ${_usernameController.text}, ${_emailController.text}, ${_passwordController.text}');
-                  }
-                },
+                onPressed: widget.isLoading
+                    ? null
+                    : () {
+                        if (_formKey.currentState!.validate()) {
+                          print('🚀 Попытка регистрации: ${widget.usernameController.text}, ${widget.emailController.text}');
+                          widget.onRegister();
+                        }
+                      },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFA0B8FF),
                   foregroundColor: const Color.fromARGB(255, 48, 55, 78),
@@ -157,7 +165,16 @@ class _RegistrationFormState extends State<RegistrationForm> {
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                child: const Text('Зарегистрироваться'),
+                child: widget.isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Color.fromARGB(255, 48, 55, 78)),
+                        ),
+                      )
+                    : const Text('Зарегистрироваться'),
               ),
             ),
           ],
