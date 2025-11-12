@@ -13,7 +13,8 @@ class RegistrationScreen extends StatefulWidget {
   State<RegistrationScreen> createState() => _RegistrationScreenState();
 }
 
-class _RegistrationScreenState extends State<RegistrationScreen> with SingleTickerProviderStateMixin {
+class _RegistrationScreenState extends State<RegistrationScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final AuthService _authService = AuthService();
   final SecureStorageService _storageService = SecureStorageService();
@@ -21,7 +22,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> with SingleTick
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
   bool _isLoading = false;
 
@@ -29,7 +31,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> with SingleTick
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    print('🔄 RegistrationScreen инициализирован');
   }
 
   @override
@@ -42,123 +43,87 @@ class _RegistrationScreenState extends State<RegistrationScreen> with SingleTick
     super.dispose();
   }
 
-  Future<void> _register() async {
+  Future<void> _register({
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String password,
+    String? username,
+  }) async {
     if (_isLoading) return;
-    
+
     setState(() {
       _isLoading = true;
     });
 
-    print('🎯 Начало процесса регистрации');
-    
     try {
-      final data = {
-        'username': _usernameController.text,
-        'email': _emailController.text,
-        'password': _passwordController.text,
-      };
+      final userData = await _authService.register(
+        email: email,
+        password: password,
+        firstName: firstName,
+        lastName: lastName,
+        username: username,
+      );
 
-      print('📝 Данные для регистрации: $data');
+      await _storageService.writeData('auth_token', userData['Token']);
+      await _storageService.writeData('user_id', userData['UserId'].toString());
 
-      final response = await _authService.register(data);
+      _tabController.animateTo(0);
 
-      print('📊 Ответ получен: ${response.statusCode}');
+      _usernameController.clear();
+      _emailController.clear();
+      _passwordController.clear();
+      _confirmPasswordController.clear();
 
-      if (response.statusCode == 200) {
-        final token = response.body;
-        print('🔑 Токен получен: ${token.length > 20 ? '${token.substring(0, 20)}...' : token}');
-        
-        await _storageService.writeData('auth_token', token);
-        print('💾 Токен сохранен в Secure Storage');
-        
-        Navigator.pushNamed(context, AppRoutes.test);
-      } else {
-        print('❌ Регистрация не удалась: ${response.statusCode}');
-        print('📄 Тело ошибки: ${response.body}');
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Ошибка регистрации: ${response.body}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Регистрация успешна! Войдите в аккаунт.'),
+          backgroundColor: Colors.green,
+        ),
+      );
     } catch (e) {
-      print('💥 Исключение при регистрации: $e');
-      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Ошибка: $e'),
+          content: Text('Ошибка регистрации: $e'),
           backgroundColor: Colors.red,
         ),
       );
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
   Future<void> _login() async {
     if (_isLoading) return;
-    
+
     setState(() {
       _isLoading = true;
     });
 
-    print('🎯 Начало процесса входа');
-    
     try {
-      final data = {
-        'email': _emailController.text,
-        'password': _passwordController.text,
-      };
-
-      print('📝 Данные для входа: $data');
-
-      final response = await _authService.login(data);
-
-      print('📊 Ответ получен: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        final token = response.body;
-        print('🔑 Токен получен: ${token.length > 20 ? '${token.substring(0, 20)}...' : token}');
-        
-        await _storageService.writeData('auth_token', token);
-        print('💾 Токен сохранен в Secure Storage');
-        
-        Navigator.pushNamed(context, AppRoutes.test);
-      } else {
-        print('❌ Вход не удался: ${response.statusCode}');
-        print('📄 Тело ошибки: ${response.body}');
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Ошибка входа: ${response.body}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (e) {
-      print('💥 Исключение при входе: $e');
-      
+      // Пока заглушка — реализуй login в AuthService
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Ошибка: $e'),
-          backgroundColor: Colors.red,
-        ),
+        const SnackBar(content: Text('Функция входа не реализована')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Ошибка: $e'), backgroundColor: Colors.red),
       );
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    print('🏗️ Построение RegistrationScreen');
-    
     return Scaffold(
       body: Stack(
         children: [
@@ -193,8 +158,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> with SingleTick
                     isLoading: _isLoading,
                   ),
                   const SizedBox(height: 30),
-                  if (_isLoading)
-                    const CircularProgressIndicator(),
+                  if (_isLoading) const CircularProgressIndicator(),
                   const SizedBox(height: 50),
                 ],
               ),

@@ -90,7 +90,6 @@ class _LoginFormState extends State<LoginForm> {
                     ? null
                     : () {
                         if (_formKey.currentState!.validate()) {
-                          print('🚀 Попытка входа: ${widget.emailController.text}');
                           widget.onLogin();
                         }
                       },
