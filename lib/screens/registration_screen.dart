@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/logo_widget.dart';
 import '../widgets/subtitle_widget.dart';
 import '../widgets/auth_container.dart';
-import '../api/auth_service.dart';
+import '../api/auth_service.dart';           // ПРАВИЛЬНЫЙ ПУТЬ
 import '../routes.dart';
 import '../storage/secure_storage_service.dart';
 
@@ -16,14 +16,15 @@ class RegistrationScreen extends StatefulWidget {
 class _RegistrationScreenState extends State<RegistrationScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final AuthService _authService = AuthService();
+  final AuthService _authService = AuthService(); // Теперь видит класс
   final SecureStorageService _storageService = SecureStorageService();
 
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
 
   bool _isLoading = false;
 
@@ -39,6 +40,8 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _tabController.dispose();
     super.dispose();
   }
@@ -51,10 +54,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     String? username,
   }) async {
     if (_isLoading) return;
-
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
       final userData = await _authService.register(
@@ -65,60 +65,84 @@ class _RegistrationScreenState extends State<RegistrationScreen>
         username: username,
       );
 
-      await _storageService.writeData('auth_token', userData['Token']);
-      await _storageService.writeData('user_id', userData['UserId'].toString());
+      final token = userData['Token']?.toString();
+      final userId = userData['UserId']?.toString();
 
-      _tabController.animateTo(0);
+      if (token == null) {
+        print('ОШИБКА: Токен не найден в ответе: $userData');
+        throw Exception('Токен не получен. Смотри логи.');
+      }
 
+      await _storageService.writeData('auth_token', token);
+      if (userId != null) {
+        await _storageService.writeData('user_id', userId);
+      }
+
+      _firstNameController.clear();
+      _lastNameController.clear();
       _usernameController.clear();
       _emailController.clear();
       _passwordController.clear();
       _confirmPasswordController.clear();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Регистрация успешна! Войдите в аккаунт.'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Ошибка регистрации: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Регистрация успешна! Вы вошли.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pushReplacementNamed(context, AppRoutes.test);
       }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<void> _login() async {
     if (_isLoading) return;
-
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
-      // Пока заглушка — реализуй login в AuthService
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Функция входа не реализована')),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ошибка: $e'), backgroundColor: Colors.red),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+      final email = _emailController.text.trim();
+      final password = _passwordController.text;
+
+      if (email.isEmpty || password.isEmpty) {
+        throw Exception('Введите email и пароль');
       }
+
+      final result = await _authService.login(email: email, password: password);
+
+      final token = result['Token']?.toString();
+      final userId = result['UserId']?.toString();
+
+      if (token == null) {
+        print('ОШИБКА: Токен не найден при входе: $result');
+        throw Exception('Токен не получен. Смотри логи.');
+      }
+
+      await _storageService.writeData('auth_token', token);
+      if (userId != null) {
+        await _storageService.writeData('user_id', userId);
+      }
+
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, AppRoutes.test);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка входа: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -153,6 +177,8 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                     emailController: _emailController,
                     passwordController: _passwordController,
                     confirmPasswordController: _confirmPasswordController,
+                    firstNameController: _firstNameController,
+                    lastNameController: _lastNameController,
                     onRegister: _register,
                     onLogin: _login,
                     isLoading: _isLoading,

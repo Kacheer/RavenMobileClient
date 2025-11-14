@@ -9,6 +9,8 @@ class AuthContainer extends StatelessWidget {
   final TextEditingController emailController;
   final TextEditingController passwordController;
   final TextEditingController confirmPasswordController;
+  final TextEditingController firstNameController;
+  final TextEditingController lastNameController;
   final Future<void> Function({
     required String firstName,
     required String lastName,
@@ -26,6 +28,8 @@ class AuthContainer extends StatelessWidget {
     required this.emailController,
     required this.passwordController,
     required this.confirmPasswordController,
+    required this.firstNameController,
+    required this.lastNameController,
     required this.onRegister,
     required this.onLogin,
     required this.isLoading,
@@ -35,9 +39,7 @@ class AuthContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 15),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(25),
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(25)),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(25),
         child: BackdropFilter(
@@ -75,6 +77,8 @@ class AuthContainer extends StatelessWidget {
                         emailController: emailController,
                         passwordController: passwordController,
                         confirmPasswordController: confirmPasswordController,
+                        firstNameController: firstNameController,
+                        lastNameController: lastNameController,
                       ),
                     ],
                   ),

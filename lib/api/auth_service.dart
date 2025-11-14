@@ -1,19 +1,13 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'dart:async';
+import 'package:http/http.dart' as http;
 
 class AuthService {
-  /// Базовый URL для эндпоинта аутентификации (без завершающего слеша)
+  // БАЗОВЫЙ URL
   final String baseUrl = 'http://ravenapp.ru/api/Auth';
-
-  /// Таймаут для сетевых запросов
   final Duration _timeout = const Duration(seconds: 10);
 
-  /// Регистрирует пользователя.
-  /// Принимает: email, password, firstName, lastName, username (опционально).
-  /// В случае успеха возвращает Map с ключами:
-  /// { "UserId": ..., "Email": ..., "FirstName": ..., "LastName": ..., "Username": ..., "Token": ... }
-  /// В случае ошибки выбрасывает Exception с подробным сообщением.
+  // РЕГИСТРАЦИЯ
   Future<Map<String, dynamic>> register({
     required String email,
     required String password,
@@ -22,71 +16,152 @@ class AuthService {
     String? username,
   }) async {
     final uri = Uri.parse('$baseUrl/Register');
-
-    final payload = <String, dynamic>{
+    final payload = {
       'Email': email,
       'Password': password,
       'FirstName': firstName,
       'LastName': lastName,
+      if (username != null && username.trim().isNotEmpty) 'Username': username.trim(),
     };
 
-    if (username != null && username.trim().isNotEmpty) {
-      payload['Username'] = username.trim();
-    }
+    print('Запрос на регистрацию: $payload');
 
     http.Response response;
     try {
-      response = await http
-          .post(
-            uri,
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode(payload),
-          )
-          .timeout(_timeout);
-    } on TimeoutException catch (_) {
-      throw Exception('Превышено время ожидания запроса. Попробуйте ещё раз.');
+      response = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(payload),
+      ).timeout(_timeout);
+    } on TimeoutException {
+      throw Exception('Превышено время ожидания.');
     } on Exception catch (e) {
-      throw Exception('Ошибка соединения: ${e.toString()}');
+      throw Exception('Ошибка соединения: $e');
     }
+
+    print('Статус: ${response.statusCode}');
+    print('Тело ответа: ${response.body}');
+    print('Заголовки: ${response.headers}');
 
     final status = response.statusCode;
     final body = response.body;
 
     if (status >= 200 && status < 300) {
       if (body.trim().isEmpty) {
-        throw Exception('Пустой ответ от сервера при регистрации.');
+        return {'warning': 'Пустой ответ'};
       }
+
       try {
         final decoded = jsonDecode(body);
         if (decoded is Map<String, dynamic>) {
-          final requiredKeys = ['UserId', 'Email', 'FirstName', 'LastName', 'Token'];
-          final missing = requiredKeys.where((k) => !decoded.containsKey(k)).toList();
-          if (missing.isNotEmpty) {
-            throw Exception('Регистрация выполнена, но в ответе отсутствуют поля: ${missing.join(', ')}');
+          final result = Map<String, dynamic>.from(decoded);
+
+          // Ищем токен везде
+          String? token = _extractToken(result, response.headers);
+          if (token != null) {
+            result['Token'] = token;
+          } else {
+            result['warning'] = 'Токен не найден в ответе';
           }
-          return Map<String, dynamic>.from(decoded);
+
+          return result;
         } else {
-          throw Exception('Непредвидимый формат ответа от сервера: ожидается JSON-объект.');
+          return {'raw': body, 'warning': 'Не JSON'};
         }
-      } on FormatException {
-        throw Exception('Не удалось распарсить JSON в ответе сервера.');
+      } on FormatException catch (e) {
+        print('Ошибка парсинга JSON: $e');
+        throw Exception('Не удалось распарсить JSON: $e');
       }
     } else {
+      _handleError(status, body);
+    }
+  }
+
+  // ВХОД
+  Future<Map<String, dynamic>> login({
+    required String email,
+    required String password,
+  }) async {
+    final uri = Uri.parse('$baseUrl/Login');
+    final payload = {'Email': email, 'Password': password};
+
+    print('Запрос на вход: $payload');
+
+    http.Response response;
+    try {
+      response = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(payload),
+      ).timeout(_timeout);
+    } on TimeoutException {
+      throw Exception('Превышено время ожидания.');
+    } on Exception catch (e) {
+      throw Exception('Ошибка соединения: $e');
+    }
+
+    print('Статус: ${response.statusCode}');
+    print('Тело ответа: ${response.body}');
+    print('Заголовки: ${response.headers}');
+
+    final status = response.statusCode;
+    final body = response.body;
+
+    if (status >= 200 && status < 300) {
+      if (body.trim().isEmpty) {
+        throw Exception('Пустой ответ');
+      }
+
       try {
         final decoded = jsonDecode(body);
-        if (decoded is Map && decoded.containsKey('message')) {
-          throw Exception('Ошибка регистрации: ${decoded['message']}');
-        } else if (decoded is Map && decoded.containsKey('error')) {
-          throw Exception('Ошибка регистрации: ${decoded['error']}');
+        if (decoded is Map<String, dynamic>) {
+          final result = Map<String, dynamic>.from(decoded);
+
+          String? token = _extractToken(result, response.headers);
+          if (token != null) {
+            result['Token'] = token;
+          } else {
+            result['warning'] = 'Токен не найден в ответе';
+          }
+
+          return result;
         } else {
-          throw Exception('Ошибка регистрации: HTTP ${status}');
+          throw Exception('Ответ не JSON');
         }
       } on FormatException {
-        final snippet = body.length > 200 ? '${body.substring(0, 200)}...' : body;
-        throw Exception('Ошибка регистрации: HTTP $status. Ответ сервера: $snippet');
-      } catch (e) {
-        throw Exception('Ошибка регистрации: HTTP $status.');
+        throw Exception('Не удалось распарсить JSON');
       }
+    } else {
+      _handleError(status, body);
+    }
+  }
+
+  // Вспомогательная функция: ищем токен
+  String? _extractToken(Map<String, dynamic> data, Map<String, String> headers) {
+    // Варианты в теле
+    if (data['Token'] != null) return data['Token'].toString();
+    if (data['token'] != null) return data['token'].toString();
+    if (data['accessToken'] != null) return data['accessToken'].toString();
+    if (data['jwt'] != null) return data['jwt'].toString();
+    if (data['Settings']?['Token'] != null) return data['Settings']['Token'].toString();
+
+    // В заголовке
+    final auth = headers['authorization'] ?? headers['Authorization'];
+    if (auth != null && auth.startsWith('Bearer ')) {
+      return auth.substring(7);
+    }
+
+    return null;
+  }
+
+  // Обработка ошибок
+  Never _handleError(int status, String body) {
+    try {
+      final decoded = jsonDecode(body);
+      final msg = decoded['message'] ?? decoded['error'] ?? 'Ошибка $status';
+      throw Exception(msg);
+    } on FormatException {
+      throw Exception('HTTP $status: $body');
     }
   }
 }

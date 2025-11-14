@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 
 class RegistrationForm extends StatefulWidget {
-  final TextEditingController usernameController;
-  final TextEditingController emailController;
-  final TextEditingController passwordController;
-  final TextEditingController confirmPasswordController;
   final Future<void> Function({
     required String firstName,
     required String lastName,
@@ -13,15 +9,23 @@ class RegistrationForm extends StatefulWidget {
     String? username,
   }) onRegister;
   final bool isLoading;
+  final TextEditingController usernameController;
+  final TextEditingController emailController;
+  final TextEditingController passwordController;
+  final TextEditingController confirmPasswordController;
+  final TextEditingController firstNameController;
+  final TextEditingController lastNameController;
 
   const RegistrationForm({
     super.key,
+    required this.onRegister,
+    required this.isLoading,
     required this.usernameController,
     required this.emailController,
     required this.passwordController,
     required this.confirmPasswordController,
-    required this.onRegister,
-    required this.isLoading,
+    required this.firstNameController,
+    required this.lastNameController,
   });
 
   @override
@@ -30,54 +34,47 @@ class RegistrationForm extends StatefulWidget {
 
 class _RegistrationFormState extends State<RegistrationForm> {
   final _formKey = GlobalKey<FormState>();
-  final _firstNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
 
-  @override
-  void dispose() {
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    super.dispose();
-  }
-
-  String? _validateNotEmpty(String? value, String field) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Введите $field';
-    }
+  String? _validateNotEmpty(String? v, String field) {
+    if (v == null || v.trim().isEmpty) return 'Введите $field';
     return null;
   }
 
-  String? _validateEmail(String? value) {
-    if (value == null || value.trim().isEmpty) return 'Введите email';
-    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-    if (!emailRegex.hasMatch(value.trim())) return 'Некорректный email';
+  String? _validateEmail(String? v) {
+    if (v == null || v.trim().isEmpty) return 'Введите email';
+    final regex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+    if (!regex.hasMatch(v.trim())) return 'Некорректный email';
     return null;
   }
 
-  String? _validatePassword(String? value) {
-    if (value == null || value.isEmpty) return 'Введите пароль';
-    if (value.length < 6) return 'Минимум 6 символов';
+  String? _validatePassword(String? v) {
+    if (v == null || v.isEmpty) return 'Введите пароль';
+    if (v.length < 6) return 'Минимум 6 символов';
     return null;
   }
 
-  String? _validateConfirmPassword(String? value) {
-    if (value != widget.passwordController.text) {
-      return 'Пароли не совпадают';
-    }
+  String? _validateConfirm(String? v) {
+    if (v != widget.passwordController.text) return 'Пароли не совпадают';
     return null;
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final firstName = widget.firstNameController.text.trim();
+    final lastName = widget.lastNameController.text.trim();
+    final email = widget.emailController.text.trim();
+    final password = widget.passwordController.text;
+    final username = widget.usernameController.text.trim().isEmpty
+        ? null
+        : widget.usernameController.text.trim();
+
     await widget.onRegister(
-      firstName: _firstNameController.text.trim(),
-      lastName: _lastNameController.text.trim(),
-      email: widget.emailController.text.trim(),
-      password: widget.passwordController.text,
-      username: widget.usernameController.text.trim().isEmpty
-          ? null
-          : widget.usernameController.text.trim(),
+      firstName: firstName,
+      lastName: lastName,
+      email: email,
+      password: password,
+      username: username,
     );
   }
 
@@ -93,7 +90,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
             const Text('Имя', style: TextStyle(color: Color(0xFF7B818A), fontSize: 16)),
             const SizedBox(height: 10),
             TextFormField(
-              controller: _firstNameController,
+              controller: widget.firstNameController,
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
                 hintText: 'Введите имя',
@@ -112,7 +109,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
             const Text('Фамилия', style: TextStyle(color: Color(0xFF7B818A), fontSize: 16)),
             const SizedBox(height: 10),
             TextFormField(
-              controller: _lastNameController,
+              controller: widget.lastNameController,
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
                 hintText: 'Введите фамилию',
@@ -202,7 +199,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
                   borderSide: BorderSide.none,
                 ),
               ),
-              validator: _validateConfirmPassword,
+              validator: _validateConfirm,
             ),
             const SizedBox(height: 30),
 
