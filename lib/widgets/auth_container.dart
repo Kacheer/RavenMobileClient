@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
-import 'dart:ui'; // Для blur
-import './login_form.dart'; // Импорт формы входа
-import './registration_form.dart'; // Импорт формы регистрации
+import 'dart:ui';
+import './login_form.dart';
+import './registration_form.dart';
 
 class AuthContainer extends StatelessWidget {
-  final TabController tabController; // Prop: контроллер табов от родителя
+  final TabController tabController;
   final TextEditingController usernameController;
   final TextEditingController emailController;
   final TextEditingController passwordController;
   final TextEditingController confirmPasswordController;
-  final VoidCallback onRegister;
+  final TextEditingController firstNameController;
+  final TextEditingController lastNameController;
+  final Future<void> Function({
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String password,
+    String? username,
+  }) onRegister;
   final VoidCallback onLogin;
   final bool isLoading;
 
@@ -20,6 +28,8 @@ class AuthContainer extends StatelessWidget {
     required this.emailController,
     required this.passwordController,
     required this.confirmPasswordController,
+    required this.firstNameController,
+    required this.lastNameController,
     required this.onRegister,
     required this.onLogin,
     required this.isLoading,
@@ -29,9 +39,7 @@ class AuthContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 15),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(25),
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(25)),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(25),
         child: BackdropFilter(
@@ -40,7 +48,6 @@ class AuthContainer extends StatelessWidget {
             color: const Color(0x330A0A0A),
             child: Column(
               children: [
-                // TabBar
                 TabBar(
                   controller: tabController,
                   indicatorColor: const Color(0xFFA0B8FF),
@@ -52,7 +59,6 @@ class AuthContainer extends StatelessWidget {
                     Tab(text: 'Регистрация'),
                   ],
                 ),
-                // TabBarView с формами
                 SizedBox(
                   height: MediaQuery.of(context).size.height * 0.6,
                   child: TabBarView(
@@ -71,6 +77,8 @@ class AuthContainer extends StatelessWidget {
                         emailController: emailController,
                         passwordController: passwordController,
                         confirmPasswordController: confirmPasswordController,
+                        firstNameController: firstNameController,
+                        lastNameController: lastNameController,
                       ),
                     ],
                   ),

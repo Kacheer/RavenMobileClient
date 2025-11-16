@@ -11,7 +11,7 @@ class AppRoutes {
       case registration:
         return MaterialPageRoute(builder: (_) => const RegistrationScreen());
       case test:
-        return MaterialPageRoute(builder: (_) => const TestScreen());
+        return MaterialPageRoute(builder: (_) => TestScreen());  // Убрано const
       default:
         return MaterialPageRoute(
           builder: (_) => const Scaffold(
