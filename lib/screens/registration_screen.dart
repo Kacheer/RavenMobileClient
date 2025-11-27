@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/logo_widget.dart';
 import '../widgets/subtitle_widget.dart';
 import '../widgets/auth_container.dart';
-import '../api/auth_service.dart';           // ПРАВИЛЬНЫЙ ПУТЬ
+import '../api/auth_service.dart';
 import '../routes.dart';
 import '../storage/secure_storage_service.dart';
 
@@ -16,7 +16,7 @@ class RegistrationScreen extends StatefulWidget {
 class _RegistrationScreenState extends State<RegistrationScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final AuthService _authService = AuthService(); // Теперь видит класс
+  final AuthService _authService = AuthService();
   final SecureStorageService _storageService = SecureStorageService();
 
   final TextEditingController _usernameController = TextEditingController();
