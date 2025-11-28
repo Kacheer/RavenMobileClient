@@ -9,9 +9,9 @@ class LogoWidget extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Image.asset(
-          'assets/Raven.png', // Путь к логотипу
-          width: 50, // Ширина (можно сделать prop, если нужно кастомизировать)
-          height: 50, // Высота
+          'assets/Raven.png',
+          width: 50,
+          height: 50,
         ),
         const SizedBox(width: 10),
         const Text(

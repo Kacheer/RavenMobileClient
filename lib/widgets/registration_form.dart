@@ -1,26 +1,81 @@
 import 'package:flutter/material.dart';
 
 class RegistrationForm extends StatefulWidget {
-  const RegistrationForm({super.key});
+  final Future<void> Function({
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String password,
+    String? username,
+  }) onRegister;
+  final bool isLoading;
+  final TextEditingController usernameController;
+  final TextEditingController emailController;
+  final TextEditingController passwordController;
+  final TextEditingController confirmPasswordController;
+  final TextEditingController firstNameController;
+  final TextEditingController lastNameController;
+
+  const RegistrationForm({
+    super.key,
+    required this.onRegister,
+    required this.isLoading,
+    required this.usernameController,
+    required this.emailController,
+    required this.passwordController,
+    required this.confirmPasswordController,
+    required this.firstNameController,
+    required this.lastNameController,
+  });
 
   @override
   State<RegistrationForm> createState() => _RegistrationFormState();
 }
 
 class _RegistrationFormState extends State<RegistrationForm> {
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-  @override
-  void dispose() {
-    _usernameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    super.dispose();
+  String? _validateNotEmpty(String? v, String field) {
+    if (v == null || v.trim().isEmpty) return 'Введите $field';
+    return null;
+  }
+
+  String? _validateEmail(String? v) {
+    if (v == null || v.trim().isEmpty) return 'Введите email';
+    final regex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+    if (!regex.hasMatch(v.trim())) return 'Некорректный email';
+    return null;
+  }
+
+  String? _validatePassword(String? v) {
+    if (v == null || v.isEmpty) return 'Введите пароль';
+    if (v.length < 6) return 'Минимум 6 символов';
+    return null;
+  }
+
+  String? _validateConfirm(String? v) {
+    if (v != widget.passwordController.text) return 'Пароли не совпадают';
+    return null;
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final firstName = widget.firstNameController.text.trim();
+    final lastName = widget.lastNameController.text.trim();
+    final email = widget.emailController.text.trim();
+    final password = widget.passwordController.text;
+    final username = widget.usernameController.text.trim().isEmpty
+        ? null
+        : widget.usernameController.text.trim();
+
+    await widget.onRegister(
+      firstName: firstName,
+      lastName: lastName,
+      email: email,
+      password: password,
+      username: username,
+    );
   }
 
   @override
@@ -32,16 +87,13 @@ class _RegistrationFormState extends State<RegistrationForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Имя пользователя',
-              style: TextStyle(color: Color(0xFF7B818A), fontSize: 16),
-            ),
+            const Text('Имя', style: TextStyle(color: Color(0xFF7B818A), fontSize: 16)),
             const SizedBox(height: 10),
             TextFormField(
-              controller: _usernameController,
+              controller: widget.firstNameController,
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
-                hintText: 'Ваше имя',
+                hintText: 'Введите имя',
                 hintStyle: TextStyle(color: Color(0xFF7B818A)),
                 filled: true,
                 fillColor: Color(0x80121212),
@@ -50,24 +102,17 @@ class _RegistrationFormState extends State<RegistrationForm> {
                   borderSide: BorderSide.none,
                 ),
               ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Пожалуйста, введите имя';
-                }
-                return null;
-              },
+              validator: (v) => _validateNotEmpty(v, 'имя'),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Эл. Почта',
-              style: TextStyle(color: Color(0xFF7B818A), fontSize: 16),
-            ),
+
+            const Text('Фамилия', style: TextStyle(color: Color(0xFF7B818A), fontSize: 16)),
             const SizedBox(height: 10),
             TextFormField(
-              controller: _emailController,
+              controller: widget.lastNameController,
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
-                hintText: 'Введите вашу эл. почту',
+                hintText: 'Введите фамилию',
                 hintStyle: TextStyle(color: Color(0xFF7B818A)),
                 filled: true,
                 fillColor: Color(0x80121212),
@@ -76,25 +121,56 @@ class _RegistrationFormState extends State<RegistrationForm> {
                   borderSide: BorderSide.none,
                 ),
               ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Пожалуйста, введите email';
-                }
-                return null;
-              },
+              validator: (v) => _validateNotEmpty(v, 'фамилию'),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Пароль',
-              style: TextStyle(color: Color(0xFF7B818A), fontSize: 16),
-            ),
+
+            const Text('Username (необязательно)', style: TextStyle(color: Color(0xFF7B818A), fontSize: 16)),
             const SizedBox(height: 10),
             TextFormField(
-              controller: _passwordController,
+              controller: widget.usernameController,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                hintText: 'Придумайте никнейм',
+                hintStyle: TextStyle(color: Color(0xFF7B818A)),
+                filled: true,
+                fillColor: Color(0x80121212),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            const Text('Эл. Почта', style: TextStyle(color: Color(0xFF7B818A), fontSize: 16)),
+            const SizedBox(height: 10),
+            TextFormField(
+              controller: widget.emailController,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                hintText: 'Введите email',
+                hintStyle: TextStyle(color: Color(0xFF7B818A)),
+                filled: true,
+                fillColor: Color(0x80121212),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              validator: _validateEmail,
+              keyboardType: TextInputType.emailAddress,
+            ),
+            const SizedBox(height: 20),
+
+            const Text('Пароль', style: TextStyle(color: Color(0xFF7B818A), fontSize: 16)),
+            const SizedBox(height: 10),
+            TextFormField(
+              controller: widget.passwordController,
               obscureText: true,
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
-                hintText: 'Введите свой пароль',
+                hintText: 'Минимум 6 символов',
                 hintStyle: TextStyle(color: Color(0xFF7B818A)),
                 filled: true,
                 fillColor: Color(0x80121212),
@@ -103,25 +179,18 @@ class _RegistrationFormState extends State<RegistrationForm> {
                   borderSide: BorderSide.none,
                 ),
               ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Пожалуйста, введите пароль';
-                }
-                return null;
-              },
+              validator: _validatePassword,
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Подтверждение пароля',
-              style: TextStyle(color: Color(0xFF7B818A), fontSize: 16),
-            ),
+
+            const Text('Подтвердите пароль', style: TextStyle(color: Color(0xFF7B818A), fontSize: 16)),
             const SizedBox(height: 10),
             TextFormField(
-              controller: _confirmPasswordController,
+              controller: widget.confirmPasswordController,
               obscureText: true,
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
-                hintText: 'Введите пароль ещё раз',
+                hintText: 'Повторите пароль',
                 hintStyle: TextStyle(color: Color(0xFF7B818A)),
                 filled: true,
                 fillColor: Color(0x80121212),
@@ -130,35 +199,30 @@ class _RegistrationFormState extends State<RegistrationForm> {
                   borderSide: BorderSide.none,
                 ),
               ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Пожалуйста, подтвердите пароль';
-                }
-                if (value != _passwordController.text) {
-                  return 'Пароли не совпадают';
-                }
-                return null;
-              },
+              validator: _validateConfirm,
             ),
             const SizedBox(height: 30),
+
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    // Логика регистрации (добавь API)
-                    print('Регистрация: ${_usernameController.text}, ${_emailController.text}, ${_passwordController.text}');
-                  }
-                },
+                onPressed: widget.isLoading ? null : _submit,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFA0B8FF),
                   foregroundColor: const Color.fromARGB(255, 48, 55, 78),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                child: const Text('Зарегистрироваться'),
+                child: widget.isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Color.fromARGB(255, 48, 55, 78)),
+                        ),
+                      )
+                    : const Text('Зарегистрироваться'),
               ),
             ),
           ],

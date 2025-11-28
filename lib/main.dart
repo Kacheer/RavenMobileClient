@@ -1,24 +1,40 @@
 import 'package:flutter/material.dart';
-import 'screens/registration_screen.dart'; // Импорт экрана
+import 'package:provider/provider.dart';
+import 'themes/theme_notifier.dart';
+import 'routes.dart';
 
 void main() {
-  runApp(const MyApp()); // Запускаем корневой виджет приложения.
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => ThemeNotifier(),
+      child: const MyApp(),
+    ),
+  );
 }
 
-// Это корневой виджет приложения. Он Stateless, так как не меняет состояние.
-// Здесь оборачиваем всё в MaterialApp для тем, навигации и т.д.
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Мессенджер', // Название приложения (показывается в таск-менеджере).
-      theme: ThemeData(
-        primarySwatch: Colors.blue, // Базовая тема (можно кастомизировать).
-      ),
-      home: const RegistrationScreen(), // Здесь указываем стартовый экран.
-      debugShowCheckedModeBanner: false, // Убираем debug-баннер (опционально).
+    return Consumer<ThemeNotifier>(
+      builder: (context, themeNotifier, child) {
+        return MaterialApp(
+          title: 'Raven Chat',
+          theme: ThemeData(
+            brightness: Brightness.light,
+            primarySwatch: Colors.blue,
+          ),
+          darkTheme: ThemeData(
+            brightness: Brightness.dark,
+            primarySwatch: Colors.blue,
+          ),
+          themeMode: themeNotifier.isDark ? ThemeMode.dark : ThemeMode.light,
+          initialRoute: AppRoutes.test,
+          onGenerateRoute: AppRoutes.generateRoute,
+          debugShowCheckedModeBanner: false,
+        );
+      },
     );
   }
 }

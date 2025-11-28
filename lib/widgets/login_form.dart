@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
 
 class LoginForm extends StatefulWidget {
-  const LoginForm({super.key});
+  final VoidCallback onLogin;
+  final bool isLoading;
+  final TextEditingController emailController;
+  final TextEditingController passwordController;
+
+  const LoginForm({
+    super.key,
+    required this.onLogin,
+    required this.isLoading,
+    required this.emailController,
+    required this.passwordController,
+  });
 
   @override
   State<LoginForm> createState() => _LoginFormState();
 }
 
 class _LoginFormState extends State<LoginForm> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +36,7 @@ class _LoginFormState extends State<LoginForm> {
             ),
             const SizedBox(height: 10),
             TextFormField(
-              controller: _emailController,
+              controller: widget.emailController,
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
                 hintText: 'Введите вашу эл. почту',
@@ -60,7 +62,7 @@ class _LoginFormState extends State<LoginForm> {
             ),
             const SizedBox(height: 10),
             TextFormField(
-              controller: _passwordController,
+              controller: widget.passwordController,
               obscureText: true,
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
@@ -84,12 +86,13 @@ class _LoginFormState extends State<LoginForm> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    // Логика входа (добавь API)
-                    print('Вход: ${_emailController.text}, ${_passwordController.text}');
-                  }
-                },
+                onPressed: widget.isLoading
+                    ? null
+                    : () {
+                        if (_formKey.currentState!.validate()) {
+                          widget.onLogin();
+                        }
+                      },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFA0B8FF),
                   foregroundColor: const Color.fromARGB(255, 48, 55, 78),
@@ -98,7 +101,16 @@ class _LoginFormState extends State<LoginForm> {
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                child: const Text('Войти'),
+                child: widget.isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Color.fromARGB(255, 48, 55, 78)),
+                        ),
+                      )
+                    : const Text('Войти'),
               ),
             ),
           ],
