@@ -13,27 +13,23 @@ class AddFriendButton extends StatelessWidget {
     final themeNotifier = Provider.of<ThemeNotifier>(context);
     final isDark = themeNotifier.isDark;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 19),
-      child: ElevatedButton(
-        onPressed: onCreateChatPressed,
-        style: ElevatedButton.styleFrom(
-          foregroundColor: Colors.white,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-        ),
+    return GestureDetector(
+      onTap: onCreateChatPressed,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+        margin: const EdgeInsets.only(bottom: 19),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
-          // mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            Icon(Icons.add_circle_outline, size: 24),
+            Icon(Icons.add_circle_outline, size: 24, color: AppColors.primary),
             const SizedBox(width: 12),
             Text(
               'Создать чат',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
+              ),
             ),
           ],
         ),

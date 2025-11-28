@@ -1,12 +1,14 @@
-// Модель для контакта (для mock-данных)
+// contact_model.dart
 class ContactModel {
-  final String avatarPath; // Аватар
-  final String username; // @username
-  final String name; // Полное имя (опционально)
+  final String? avatarPath; // Аватар (может быть null для реальных контактов)
+  final String name; // Имя контакта
+  final String phoneNumber; // Номер телефона
+  final bool isRegistered; // Зарегистрирован ли в приложении
 
   ContactModel({
-    required this.avatarPath,
-    required this.username,
+    this.avatarPath,
     required this.name,
+    required this.phoneNumber,
+    this.isRegistered = false,
   });
 }
