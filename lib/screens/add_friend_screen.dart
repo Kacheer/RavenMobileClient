@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../widgets/add_friend_search.dart';
 import '../widgets/add_friend_button.dart';
 import '../widgets/contact_item.dart';
@@ -33,27 +35,35 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   Future<void> _loadContacts() async {
     try {
       print('Проверка разрешений для контактов...');
-      
-      final status = await Permission.contacts.status;
-      print('Статус разрешения: $status');
-      
-      if (status.isDenied) {
-        final newStatus = await Permission.contacts.request();
-        if (!newStatus.isGranted) {
-          setState(() {
-            _isLoading = false;
-            _permissionGranted = false;
-            _errorMessage = 'Разрешение не предоставлено';
-          });
-          return;
-        }
-      }
 
-      if (status.isGranted) {
+      // На десктопе и в web плагин PermissionHandler может быть не реализован.
+      // Поэтому проверяем платформу: если это Android или iOS — используем плагин,
+      // иначе (Linux, macOS, Windows, Web) — сразу загружаем демо-контакты.
+      if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+        final status = await Permission.contacts.status;
+        print('Статус разрешения: $status');
+
+        if (status.isDenied) {
+          final newStatus = await Permission.contacts.request();
+          if (!newStatus.isGranted) {
+            setState(() {
+              _isLoading = false;
+              _permissionGranted = false;
+              _errorMessage = 'Разрешение не предоставлено';
+            });
+            return;
+          }
+        }
+
+        if (status.isGranted) {
+          _permissionGranted = true;
+          // В реальном приложении здесь будет интеграция с нативным кодом
+          await _loadDemoContacts();
+        }
+      } else {
+        // Десктоп/Web: пропускаем проверку и показываем демо-контакты
+        print('Платформа не мобильная — загружаем демо-контакты');
         _permissionGranted = true;
-        
-        // Временное решение: используем демо-контакты
-        // В реальном приложении здесь будет интеграция с нативным кодом
         await _loadDemoContacts();
       }
     } catch (e) {
@@ -132,16 +142,21 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       _isLoading = true;
       _errorMessage = '';
     });
-    
-    final status = await Permission.contacts.request();
-    if (status.isGranted) {
-      await _loadContacts();
+    // Запрос разрешения работает только на мобильных платформах
+    if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+      final status = await Permission.contacts.request();
+      if (status.isGranted) {
+        await _loadContacts();
+      } else {
+        setState(() {
+          _isLoading = false;
+          _permissionGranted = false;
+          _errorMessage = 'Пользователь отказал в доступе';
+        });
+      }
     } else {
-      setState(() {
-        _isLoading = false;
-        _permissionGranted = false;
-        _errorMessage = 'Пользователь отказал в доступе';
-      });
+      // На десктопе открывать настройки и запрос разрешения не нужно — просто загрузим демо-контакты
+      await _loadDemoContacts();
     }
   }
 

@@ -1,11 +1,14 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+import '../api/auth_service.dart';
+import '../storage/secure_storage_service.dart';
+import '../routes.dart';
 import '../widgets/logo_widget.dart';
 import '../widgets/subtitle_widget.dart';
 import '../widgets/auth_container.dart';
-import '../api/auth_service.dart';
-import '../routes.dart';
-import '../storage/secure_storage_service.dart';
 
+/// Экран регистрации и входа. Обрабатывает форму через AuthContainer.
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
 
@@ -13,9 +16,8 @@ class RegistrationScreen extends StatefulWidget {
   State<RegistrationScreen> createState() => _RegistrationScreenState();
 }
 
-class _RegistrationScreenState extends State<RegistrationScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _RegistrationScreenState extends State<RegistrationScreen> with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
   final AuthService _authService = AuthService();
   final SecureStorageService _storageService = SecureStorageService();
 
@@ -32,6 +34,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    if (kDebugMode) {
+      print('RegistrationScreen: initState');
+    }
   }
 
   @override
@@ -46,7 +51,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     super.dispose();
   }
 
-  Future<void> _register({
+  Future<void> _handleRegister({
     required String firstName,
     required String lastName,
     required String email,
@@ -57,7 +62,8 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     setState(() => _isLoading = true);
 
     try {
-      final userData = await _authService.register(
+      if (kDebugMode) print('Регистрация: $email, имя=$firstName $lastName');
+      final result = await _authService.register(
         email: email,
         password: password,
         firstName: firstName,
@@ -65,81 +71,47 @@ class _RegistrationScreenState extends State<RegistrationScreen>
         username: username,
       );
 
-      final token = userData['Token']?.toString();
-      final userId = userData['UserId']?.toString();
+      final token = result['Token']?.toString();
+      if (token == null) throw Exception('Токен не получен');
 
-      if (token == null) {
-        print('ОШИБКА: Токен не найден в ответе: $userData');
-        throw Exception('Токен не получен. Смотри логи.');
-      }
-
-      await _storageService.writeData('auth_token', token);
-      if (userId != null) {
-        await _storageService.writeData('user_id', userId);
-      }
-
-      _firstNameController.clear();
-      _lastNameController.clear();
-      _usernameController.clear();
-      _emailController.clear();
-      _passwordController.clear();
-      _confirmPasswordController.clear();
+  await _storageService.writeData('auth_token', token);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Регистрация успешна! Вы вошли.'),
-            backgroundColor: Colors.green,
-          ),
-        );
         Navigator.pushReplacementNamed(context, AppRoutes.test);
       }
-    } catch (e) {
+    } catch (e, st) {
+      if (kDebugMode) print('Ошибка регистрации: $e\n$st');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка: $e'), backgroundColor: Colors.red),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Ошибка регистрации: $e')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  Future<void> _login() async {
+  Future<void> _handleLogin() async {
     if (_isLoading) return;
     setState(() => _isLoading = true);
 
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
     try {
-      final email = _emailController.text.trim();
-      final password = _passwordController.text;
-
-      if (email.isEmpty || password.isEmpty) {
-        throw Exception('Введите email и пароль');
-      }
-
-      final result = await _authService.login(email: email, password: password);
+      if (kDebugMode) print('Вход: $email');
+  final result = await _authService.login(email: email, password: password);
 
       final token = result['Token']?.toString();
-      final userId = result['UserId']?.toString();
+      if (token == null) throw Exception('Токен не получен');
 
-      if (token == null) {
-        print('ОШИБКА: Токен не найден при входе: $result');
-        throw Exception('Токен не получен. Смотри логи.');
-      }
-
-      await _storageService.writeData('auth_token', token);
-      if (userId != null) {
-        await _storageService.writeData('user_id', userId);
-      }
+  await _storageService.writeData('auth_token', token);
 
       if (mounted) {
         Navigator.pushReplacementNamed(context, AppRoutes.test);
       }
-    } catch (e) {
+    } catch (e, st) {
+      if (kDebugMode) print('Ошибка входа: $e\n$st');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка входа: $e'), backgroundColor: Colors.red),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Ошибка входа: $e')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -179,12 +151,12 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                     confirmPasswordController: _confirmPasswordController,
                     firstNameController: _firstNameController,
                     lastNameController: _lastNameController,
-                    onRegister: _register,
-                    onLogin: _login,
+                    onRegister: ({required String firstName, required String lastName, required String email, required String password, String? username}) {
+                      return _handleRegister(firstName: firstName, lastName: lastName, email: email, password: password, username: username);
+                    },
+                    onLogin: () => _handleLogin(),
                     isLoading: _isLoading,
                   ),
-                  const SizedBox(height: 30),
-                  if (_isLoading) const CircularProgressIndicator(),
                   const SizedBox(height: 50),
                 ],
               ),
